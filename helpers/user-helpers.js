@@ -169,7 +169,48 @@ module.exports={
     }
 
  })
-  }
+  },
+  getTotalAmount:(userId)=>{
+    return new Promise(async(resolve,riject)=>{
+        let total=await db.get().collection(collection.CART_COLLECTION).aggregate([
+            {
+                $match:{user:ObjectId(userId)}
+            },
+            {
+                
+                $unwind: "$products"
+            },
+            {
+                $project:{
+                    item:'$products.item',
+                  quantity:'$products.quantity'    
+                }      
+            },
+            {
+                $lookup:{
+                    from:collection.PRODUCT_COLLECTION,
+                    localField:'item',
+                    foreignField:'_id',
+                    as:'product'
+                }
+            },
+            {
+                $project:{
+                    item:1,quantity:1,product:{$arrayElemAt:['$product',0]}
+                }
+            },
+            {
+                $project:{
+                    // total:{$sum:{$multiply:['$quantity','$product.Price']}}
+                    total: {$sum: {$multiply: [{ $toInt: "$quantity" }, { $toInt: "$product.Price" }]}}
+                }
+            }          
+        ]).toArray()
+        console.log(total)
+        resolve(cartItems)
+    })
+    
+ }
 }
 
     
