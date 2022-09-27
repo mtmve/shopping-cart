@@ -4,6 +4,7 @@ var productHelpers=require('../helpers/product-helpers')
 const userHelpers=require('../helpers/user-helpers');
 const { response } = require('../app');
 const e = require('express');
+const { reset } = require('nodemon');
 
 const verifyLogin=(req,res,next)=>{
   if(req.session.loggedIn){
@@ -83,8 +84,6 @@ router.get('/cart',verifyLogin,async(req,res)=>{
   console.log(products);
   res.render('user/cart',{products,user:req.session.user,totalvalue})  
 })
-
-
 router.get('/add-to-cart/:id',(req,res)=>{
   console.log("api call")
   userHelpers.addToCart(req.params.id,req.session.user._id).then(()=>{
@@ -95,20 +94,66 @@ router.get('/add-to-cart/:id',(req,res)=>{
 
 router.post('/change-product-quantity',(req,res,next)=>{
   console.log(req.body)
-  userHelpers.changeProductQuantity(req.body).then((response)=>{
+  userHelpers.changeProductQuantity(req.body).then(async(response)=>{
+  response.total=await userHelpers.getTotalAmount(req.body.user)
     res.json(response)
   })
 })
 
 
-router.get('/place-order',async(req,res)=>{
+router.get('/place-order',verifyLogin,async(req,res)=>{
 
   let total=await userHelpers.getTotalAmount(req.session.user._id)
-  console.log(req.session)
-  res.render('user/place-order')
-})
 
+  console.log(total)
+  res.render('user/place-order',{total,user:req.session.user})
+
+    
+})
+router.post('/place-order',async(req,res)=>{
+  console.log(req.body)
+  let products=await userHelpers.getCartProductList(req.body.userId)
+  let totalPrice=await userHelpers.getTotalAmount(req.body.userId)
+  userHelpers.placeOrder(req.body,products,totalPrice).then((orderId)=>{
+
+    if(req.body['payement-method']=='COD'){
+
+      res.json({status:true})
+    }else{
+      userHelpers.generateRazorpay(orderId,totalPrice).then((response)=>{
+             res.json(response)
+      })
+
+    }
+          console.log(req.body)
+  })
+
+
+
+  router.get('/order-success',(req,res)=>{
+    res.render('user/order-success',{user:req.session.user})
+  })
+
+  router.get('/order',async(req,res)=>{
+    let orders=await userHelpers.getUserOrder(req.session.user._id)
+    res.render('user/orders',{user:req.session.user,orders})
+    console.log(orders)
+  })
+
+  router.get('/ordered-products/:id',async(req,res)=>{
+    let products=await userHelpers.getOrderProducts(req.params._id)
+    res.render('user/ordered-products',{user:req.session.user,products})
+    console.log(products)
+  })
+  
+
+
+
+
+  
+ 
+})
 module.exports = router;
 
-
+ 
 

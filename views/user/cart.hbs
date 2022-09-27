@@ -21,9 +21,9 @@
                     <td>{{this.product.Price}}</td>
                 
                      <td>
-                        <button class="cart-item-count mr-3" onclick="changeQuantity('{{this._id}}','{{this.product._id}}',-1)">-</button>
+                        <button class="cart-item-count mr-3" onclick="changeQuantity('{{this._id}}','{{this.product._id}}','{{../user._id}}',-1)">-</button>
                         <span id="{{this.product._id}}">{{this.quantity}}</span>
-                        <button class="cart-item-count ml-3" onclick="changeQuantity('{{this._id}}','{{this.product._id}}',1)">+</button>
+                        <button class="cart-item-count ml-3" onclick="changeQuantity('{{this._id}}','{{this.product._id}}','{{../user._id}}',1)">+</button>
                     
                      
                        
@@ -34,10 +34,11 @@
                      </td>
                 </tr>
                 {{/each}}
+
             </tbody>
         </table>
         <hr>
-        <h3 class="float-right mr-5 mt-4">Total: Rs <span id="total">{{totalvalue}}</span> </h3><br>
+        <h3 class="float-right" style="margin-right: 70px;">Total:Rs0.<span id="total">{{totalvalue}}</span> </h3>
 
         <a href="/place-order" style="margin-top: 20px;margin-left:890px;font-weight: bold;" class=" btn btn-success">Place Order</a>
     </div>
@@ -45,7 +46,7 @@
 
     
 <script>
-    function changeQuantity(cartId,proId,count){
+    function changeQuantity(cartId,proId,userId,count){
         console.log(proId)
         let quantity=parseInt(document.getElementById(proId).innerHTML)
         count=parseInt(count)
@@ -54,6 +55,7 @@
         $.ajax({
             url:'/change-product-quantity',
             data:{
+                user:userId,
                 cart:cartId,
                 product:proId,
                 count:count,
@@ -67,6 +69,8 @@
                 location.reload()
               }else{
                 document.getElementById(proId).innerHTML=quantity+count
+                document.getElementById(total).innerHTML=response.total
+
               }
             }
         })
