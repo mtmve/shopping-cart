@@ -248,7 +248,9 @@ module.exports={
 
                db.get().collection(collection.ORDER_COLLECTION).insertOne(orderObj).then((response)=>{
                 db.get().collection(collection.CART_COLLECTION).deleteOne({user:objectId(order.userId)})
+                console.log("order id:",response.ops[0]._id)
                 resolve(response.ops[0]._id)
+
                })
         
 
@@ -311,11 +313,17 @@ module.exports={
             var options = {
                 amount:total,
                 currency:"INR",
-                receipt:orderId
+                receipt: ""+orderId
             };
             instance.order.create(options,function(err,order){
-                console.log("new order:",order);
-                resolve(order)
+                if(err){
+                    console.log(err)
+                }else{
+                    console.log("New Order",order);
+                    resolve(order)
+                }
+
+                
             });
 
             
